@@ -35,23 +35,29 @@ class ProductService {
     );
   }
   async getProducts(searchQuery, pageQuery) {
-    if (!pageQuery || typeof pageQuery !== "string") {
-      pageQuery = 1;
-    }
-
-    if (searchQuery) {
-      return db.query(
-        `SELECT * FROM products WHERE LOWER(title) LIKE '%' || LOWER($1) || '%' ORDER BY id LIMIT ${PRODUCTS_ON_PAGE} OFFSET ${
-          PRODUCTS_ON_PAGE * (pageQuery - 1)
-        }`,
-        [searchQuery]
-      );
-    } else {
-      return db.query(
-        `SELECT * FROM products ORDER BY id LIMIT ${PRODUCTS_ON_PAGE} OFFSET ${
-          PRODUCTS_ON_PAGE * (pageQuery - 1)
-        }`
-      );
+    if (pageQuery === undefined) {
+      if (searchQuery) {
+        return db.query(
+          `SELECT * FROM products WHERE LOWER(title) LIKE '%' || LOWER($1) || '%' ORDER BY id`
+        );
+      } else {
+        return db.query(`SELECT * FROM products ORDER BY id`);
+      }
+    } else if (Number(pageQuery)) {
+      if (searchQuery) {
+        return db.query(
+          `SELECT * FROM products WHERE LOWER(title) LIKE '%' || LOWER($1) || '%' ORDER BY id LIMIT ${PRODUCTS_ON_PAGE} OFFSET ${
+            PRODUCTS_ON_PAGE * (pageQuery - 1)
+          }`,
+          [searchQuery]
+        );
+      } else {
+        return db.query(
+          `SELECT * FROM products ORDER BY id LIMIT ${PRODUCTS_ON_PAGE} OFFSET ${
+            PRODUCTS_ON_PAGE * (pageQuery - 1)
+          }`
+        );
+      }
     }
   }
   async getTotalCount(searchQuery) {
