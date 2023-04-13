@@ -7,6 +7,9 @@
 /.next/
 /out/
 
+# static
+/static/
+
 # production
 /build
 

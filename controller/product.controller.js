@@ -2,7 +2,10 @@ const productService = require("../services/product.service");
 
 class ProductController {
   async createProduct(req, res) {
-    const newProduct = await productService.createProduct(req.body);
+    const newProduct = await productService.createProduct(
+      req.body,
+      req.files.images
+    );
     res.json(newProduct[0]);
   }
   async getProducts(req, res) {
@@ -19,7 +22,10 @@ class ProductController {
     res.json(product[0]);
   }
   async updateProduct(req, res) {
-    const updatedProduct = await productService.updateProduct(req.body);
+    const updatedProduct = await productService.updateProduct(
+      req.body,
+      req.files.images
+    );
     res.json(updatedProduct[0]);
   }
   async deleteProduct(req, res) {
