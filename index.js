@@ -4,6 +4,7 @@ const fileUpload = require("express-fileupload");
 require("dotenv").config();
 const productRouter = require("./routes/product.routes");
 const categoryRouter = require("./routes/category.routes");
+const authRouter = require("./routes/auth.routes");
 
 const BACKEND_PORT = 5000;
 
@@ -14,7 +15,16 @@ app.use(fileUpload({}));
 app.use(cors());
 app.use("/api", productRouter);
 app.use("/api", categoryRouter);
+app.use("/api", authRouter);
 
-app.listen(BACKEND_PORT, () => {
-  console.log("SERVER IS WORKING");
-});
+const start = () => {
+  try {
+    app.listen(BACKEND_PORT, () =>
+      console.log(`SERVER STARTED ON PORT ${BACKEND_PORT}`)
+    );
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+start();
