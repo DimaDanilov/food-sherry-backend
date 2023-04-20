@@ -17,8 +17,12 @@ const generateJwt = (id, email, name, surname, phone) => {
   );
 };
 class AuthController {
-  async registration(req, res) {
-    const token = await authService.registration(req.body);
+  async registerUser(req, res) {
+    const token = await authService.registerUser(req.body);
+    res.json({ token });
+  }
+  async registerCompany(req, res) {
+    const token = await authService.registerCompany(req.body);
     res.json({ token });
   }
   async login(req, res) {
