@@ -18,8 +18,8 @@ class ProductController {
     res.json({ products, total_count });
   }
   async getOneProduct(req, res) {
-    const product = await productService.getOneProduct(req.params.id);
-    res.json(product[0]);
+    const products = await productService.getOneProduct(req.params.id);
+    res.json(products[0]);
   }
   async updateProduct(req, res) {
     const updatedProduct = await productService.updateProduct(

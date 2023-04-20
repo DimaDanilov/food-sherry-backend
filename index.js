@@ -5,6 +5,7 @@ require("dotenv").config();
 const productRouter = require("./routes/product.routes");
 const categoryRouter = require("./routes/category.routes");
 const authRouter = require("./routes/auth.routes");
+const userRouter = require("./routes/user.routes");
 
 const BACKEND_PORT = 5000;
 
@@ -16,6 +17,7 @@ app.use(cors());
 app.use("/api", productRouter);
 app.use("/api", categoryRouter);
 app.use("/api", authRouter);
+app.use("/api", userRouter);
 
 const start = () => {
   try {
