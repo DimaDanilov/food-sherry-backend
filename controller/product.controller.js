@@ -18,6 +18,25 @@ class ProductController {
     total_count = parseInt(total_count[0].count);
     res.json({ products, total_count });
   }
+  async getCurrentProducts(req, res) {
+    const products = await productService.getCurrentProducts(
+      req.params.profile_id
+    );
+    res.json(products);
+  }
+  async getClosedProducts(req, res) {
+    const products = await productService.getClosedProducts(
+      req.params.profile_id
+    );
+    res.json(products);
+  }
+  async getTakenProducts(req, res) {
+    const products = await productService.getTakenProducts(
+      req.params.profile_id
+    );
+    res.json(products);
+  }
+
   async getOneProduct(req, res) {
     const products = await productService.getOneProduct(req.params.id);
     res.json(products[0]);

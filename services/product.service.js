@@ -73,6 +73,27 @@ class ProductService {
       }
     }
   }
+  async getCurrentProducts(authorId) {
+    return db.query(
+      `SELECT id, title, images, status
+      FROM products WHERE author_id = $1 AND (status = 'open' OR status = 'reserved') ORDER BY id DESC`,
+      [authorId]
+    );
+  }
+  async getClosedProducts(authorId) {
+    return db.query(
+      `SELECT id, title, images, status
+      FROM products WHERE author_id = $1 AND status = 'closed' ORDER BY id DESC`,
+      [authorId]
+    );
+  }
+  async getTakenProducts(authorId) {
+    return db.query(
+      `SELECT id, title, images, status
+      FROM products WHERE client_id = $1 AND (status = 'reserved' OR status = 'closed') ORDER BY id DESC`,
+      [authorId]
+    );
+  }
   async getTotalCount(searchQuery) {
     if (searchQuery) {
       return db.query(
