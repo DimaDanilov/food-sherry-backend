@@ -38,14 +38,14 @@ class ProductService {
     if (pageQuery === undefined) {
       if (searchQuery) {
         return db.query(
-          `SELECT p.id, p.title, p.description, p.amount, p.location, p.images, p.status, p.time_created, p.time_to_take, 
+          `SELECT p.id, p.title, p.client_id, p.description, p.amount, p.location, p.images, p.status, p.time_created, p.time_to_take, 
           (SELECT json_build_object('id', c.id, 'name', c.name) FROM category c WHERE c.id = p.category_id) as category,
           (SELECT json_build_object('id', a.id, 'name', a.name, 'surname', a.surname, 'company_name', a.company_name, 'email', a.email, 'phone', a.phone) FROM user_account a WHERE a.id = p.author_id) as author
           FROM products p WHERE LOWER(p.title) LIKE '%' || LOWER($1) || '%' ORDER BY p.id`,
           [searchQuery]
         );
       } else {
-        return db.query(`SELECT p.id, p.title, p.description, p.amount, p.location, p.images, p.status, p.time_created, p.time_to_take, 
+        return db.query(`SELECT p.id, p.title, p.client_id, p.description, p.amount, p.location, p.images, p.status, p.time_created, p.time_to_take, 
         (SELECT json_build_object('id', c.id, 'name', c.name) FROM category c WHERE c.id = p.category_id) as category,
         (SELECT json_build_object('id', a.id, 'name', a.name, 'surname', a.surname, 'company_name', a.company_name, 'email', a.email, 'phone', a.phone) FROM user_account a WHERE a.id = p.author_id) as author
         FROM products p ORDER BY p.id`);
@@ -53,7 +53,7 @@ class ProductService {
     } else if (Number(pageQuery)) {
       if (searchQuery) {
         return db.query(
-          `SELECT p.id, p.title, p.description, p.amount, p.location, p.images, p.status, p.time_created, p.time_to_take, 
+          `SELECT p.id, p.title, p.client_id, p.description, p.amount, p.location, p.images, p.status, p.time_created, p.time_to_take, 
           (SELECT json_build_object('id', c.id, 'name', c.name) FROM category c WHERE c.id = p.category_id) as category,
           (SELECT json_build_object('id', a.id, 'name', a.name, 'surname', a.surname, 'company_name', a.company_name, 'email', a.email, 'phone', a.phone) FROM user_account a WHERE a.id = p.author_id) as author
           FROM products p WHERE LOWER(p.title) LIKE '%' || LOWER($1) || '%' ORDER BY p.id LIMIT ${PRODUCTS_ON_PAGE} OFFSET ${
@@ -63,7 +63,7 @@ class ProductService {
         );
       } else {
         return db.query(
-          `SELECT p.id, p.title, p.description, p.amount, p.location, p.images, p.status, p.time_created, p.time_to_take, 
+          `SELECT p.id, p.title, p.description, p.client_id, p.amount, p.location, p.images, p.status, p.time_created, p.time_to_take, 
           (SELECT json_build_object('id', c.id, 'name', c.name) FROM category c WHERE c.id = p.category_id) as category,
           (SELECT json_build_object('id', a.id, 'name', a.name, 'surname', a.surname, 'company_name', a.company_name, 'email', a.email, 'phone', a.phone) FROM user_account a WHERE a.id = p.author_id) as author
           FROM products p ORDER BY p.id LIMIT ${PRODUCTS_ON_PAGE} OFFSET ${
@@ -85,7 +85,7 @@ class ProductService {
   }
   async getOneProduct(productId) {
     return db.query(
-      `SELECT p.id, p.title, p.description, p.amount, p.location, p.images, p.status, p.time_created, p.time_to_take, 
+      `SELECT p.id, p.title, p.client_id, p.description, p.amount, p.location, p.images, p.status, p.time_created, p.time_to_take, 
       (SELECT json_build_object('id', c.id, 'name', c.name) FROM category c WHERE c.id = p.category_id) as category,
       (SELECT json_build_object('id', a.id, 'name', a.name, 'surname', a.surname, 'company_name', a.company_name, 'email', a.email, 'phone', a.phone) FROM user_account a WHERE a.id = p.author_id) as author
       FROM products p WHERE p.id = $1`,
@@ -120,7 +120,7 @@ class ProductService {
       // add new pictures
       const fileName = fileService.saveFiles(pictures);
       return db.query(
-        `UPDATE products SET title = $1, author_id = $2, category_id = $3, description = $4, amount = $5, time_created = $6, time_to_take = $7, location = $8, images = $9, status = $10 where id = $11 RETURNING *`,
+        `UPDATE products SET title = $1, author_id = $2, category_id = $3, description = $4, amount = $5, time_created = $6, time_to_take = $7, location = $8, images = $9, status = $10 WHERE id = $11 RETURNING *`,
         [
           title,
           userId,
@@ -135,6 +135,68 @@ class ProductService {
           id,
         ]
       );
+    }
+  }
+  async updateProductStatus(product, userId) {
+    const { id, status } = product;
+    let productToChange = await db.query(
+      `SELECT author_id, client_id, status FROM products where id = $1`,
+      [id]
+    );
+
+    switch (productToChange[0].status) {
+      case status:
+        console.log("You cant change status on the same status.");
+        break;
+      case "closed":
+        console.log("Status is closed. You can't change it anymore.");
+        break;
+      case "open":
+        if (status === "reserved") {
+          if (userId !== productToChange[0].author_id) {
+            return db.query(
+              `UPDATE products SET client_id = $1, status = $2 WHERE id = $3 RETURNING id, status, client_id`,
+              [userId, status, id]
+            );
+          } else {
+            console.log("You can't reserve product on yourself.");
+          }
+        } else if (status === "closed") {
+          console.log(
+            "You cant change status from open to closed. Reserve it first."
+          );
+        }
+        break;
+      case "reserved":
+        if (status === "open") {
+          if (
+            userId === productToChange[0].client_id ||
+            userId === productToChange[0].author_id
+          ) {
+            return db.query(
+              `UPDATE products SET client_id = $1, status = $2 WHERE id = $3 RETURNING id, status, client_id`,
+              [null, status, id]
+            );
+          } else {
+            console.log("Error. You are not an author or reserver.");
+          }
+        } else if (status === "closed") {
+          if (
+            userId === productToChange[0].client_id ||
+            userId === productToChange[0].author_id
+          ) {
+            return db.query(
+              `UPDATE products SET client_id = $1, status = $2 WHERE id = $3 RETURNING id, status, client_id`,
+              [productToChange[0].client_id, status, id]
+            );
+          } else {
+            console.log("Error. You are not an author or reserver.");
+          }
+        }
+        break;
+      default:
+        console.log("Status to change unknown.");
+        break;
     }
   }
   async deleteProduct(productId, userId) {

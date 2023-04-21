@@ -30,6 +30,13 @@ class ProductController {
     );
     res.json(updatedProduct[0]);
   }
+  async updateProductStatus(req, res) {
+    const updatedProduct = await productService.updateProductStatus(
+      req.body,
+      req.user.id
+    );
+    res.json(updatedProduct[0]);
+  }
   async deleteProduct(req, res) {
     const product = await productService.deleteProduct(
       req.params.id,

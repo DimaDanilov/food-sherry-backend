@@ -7,6 +7,11 @@ router.post("/product", authMiddleware, productController.createProduct);
 router.get("/product", productController.getProducts);
 router.get("/product/:id", productController.getOneProduct);
 router.put("/product", authMiddleware, productController.updateProduct);
+router.put(
+  "/product_status",
+  authMiddleware,
+  productController.updateProductStatus
+);
 router.delete("/product/:id", authMiddleware, productController.deleteProduct);
 
 module.exports = router;
