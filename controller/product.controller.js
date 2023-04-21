@@ -4,7 +4,8 @@ class ProductController {
   async createProduct(req, res) {
     const newProduct = await productService.createProduct(
       req.body,
-      req.files.images
+      req.files.images,
+      req.user.id
     );
     res.json(newProduct[0]);
   }
@@ -24,12 +25,16 @@ class ProductController {
   async updateProduct(req, res) {
     const updatedProduct = await productService.updateProduct(
       req.body,
-      req.files.images
+      req.files.images,
+      req.user.id
     );
     res.json(updatedProduct[0]);
   }
   async deleteProduct(req, res) {
-    const product = await productService.deleteProduct(req.params.id);
+    const product = await productService.deleteProduct(
+      req.params.id,
+      req.user.id
+    );
     res.json(product[0]);
   }
 }
