@@ -13,6 +13,10 @@ router.get(
 );
 router.get("/product_closed/:profile_id", productController.getClosedProducts);
 router.get("/product_taken/:profile_id", productController.getTakenProducts);
+router.get(
+  "/product_created/:profile_id",
+  productController.getCreatedProductsByUser
+);
 
 router.put("/product", authMiddleware, productController.updateProduct);
 router.put(

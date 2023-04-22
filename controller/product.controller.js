@@ -18,27 +18,47 @@ class ProductController {
     total_count = parseInt(total_count[0].count);
     res.json({ products, total_count });
   }
+  async getOneProduct(req, res) {
+    const products = await productService.getOneProduct(req.params.id);
+    res.json(products[0]);
+  }
   async getCurrentProducts(req, res) {
     const products = await productService.getCurrentProducts(
+      req.params.profile_id,
+      req.query.page
+    );
+    let total_count = await productService.getCurrentTotalCount(
       req.params.profile_id
     );
-    res.json(products);
+    total_count = parseInt(total_count[0].count);
+    res.json({ products, total_count });
   }
   async getClosedProducts(req, res) {
     const products = await productService.getClosedProducts(
+      req.params.profile_id,
+      req.query.page
+    );
+    let total_count = await productService.getClosedTotalCount(
       req.params.profile_id
     );
-    res.json(products);
+    total_count = parseInt(total_count[0].count);
+    res.json({ products, total_count });
   }
   async getTakenProducts(req, res) {
     const products = await productService.getTakenProducts(
+      req.params.profile_id,
+      req.query.page
+    );
+    let total_count = await productService.getTakenTotalCount(
       req.params.profile_id
     );
-    res.json(products);
+    total_count = parseInt(total_count[0].count);
+    res.json({ products, total_count });
   }
-
-  async getOneProduct(req, res) {
-    const products = await productService.getOneProduct(req.params.id);
+  async getCreatedProductsByUser(req, res) {
+    const products = await productService.getCreatedProductsByUser(
+      req.params.profile_id
+    );
     res.json(products[0]);
   }
   async updateProduct(req, res) {
