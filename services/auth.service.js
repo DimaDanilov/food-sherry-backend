@@ -2,15 +2,24 @@ const db = require("../db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const generateJwt = (id, email, name, surname, company_name, phone) => {
+const generateJwt = (
+  id,
+  email,
+  name,
+  surname,
+  companyName,
+  phone,
+  timeCreated
+) => {
   return jwt.sign(
     {
       id: id,
       email: email,
       name: name,
       surname: surname,
-      company_name: company_name,
+      company_name: companyName,
       phone: phone,
+      time_created: timeCreated,
     },
     process.env.SECRET_KEY,
     {
@@ -38,8 +47,19 @@ class AuthService {
     }
     const hashPassword = await bcrypt.hash(password, 5);
     const user = await db.query(
-      `INSERT INTO user_account (email, password, name, surname, company_name, phone) values ($1, $2, $3, $4, $5, $6) RETURNING id, email, name, surname, company_name, phone`,
-      [email, hashPassword, name, surname, company_name, phone]
+      `INSERT INTO user_account 
+      (email, password, name, surname, company_name, phone, time_created) 
+      values ($1, $2, $3, $4, $5, $6, $7) 
+      RETURNING id, email, name, surname, company_name, phone, time_created`,
+      [
+        email,
+        hashPassword,
+        name,
+        surname,
+        company_name,
+        phone,
+        new Date().toISOString(),
+      ]
     );
     const token = generateJwt(
       user[0].id,
@@ -47,7 +67,8 @@ class AuthService {
       user[0].name,
       user[0].surname,
       user[0].company_name,
-      user[0].phone
+      user[0].phone,
+      user[0].time_created
     );
 
     return token;
@@ -56,7 +77,7 @@ class AuthService {
   async login(loginData) {
     const { email, password } = loginData;
     let user = await db.query(
-      `SELECT id, email, password, name, surname, company_name, phone FROM user_account WHERE email = $1`,
+      `SELECT id, email, password, name, surname, company_name, phone, time_created FROM user_account WHERE email = $1`,
       [email]
     );
     if (!user.length) {
@@ -72,10 +93,22 @@ class AuthService {
       user[0].name,
       user[0].surname,
       user[0].company_name,
-      user[0].phone
+      user[0].phone,
+      user[0].time_created
     );
 
     return token;
+  }
+  async check(userData) {
+    return generateJwt(
+      userData.id,
+      userData.email,
+      userData.name,
+      userData.surname,
+      userData.company_name,
+      userData.phone,
+      userData.time_created
+    );
   }
 }
 

@@ -42,7 +42,7 @@ class ProductService {
         return db.query(
           `SELECT p.id, p.title, p.client_id, p.description, p.amount, p.location, p.images, p.status, p.time_created, p.time_to_take, 
           (SELECT json_build_object('id', c.id, 'name', c.name) FROM category c WHERE c.id = p.category_id) as category,
-          (SELECT json_build_object('id', a.id, 'name', a.name, 'surname', a.surname, 'company_name', a.company_name, 'email', a.email, 'phone', a.phone) FROM user_account a WHERE a.id = p.author_id) as author
+          (SELECT json_build_object('id', a.id, 'name', a.name, 'surname', a.surname, 'company_name', a.company_name, 'email', a.email, 'phone', a.phone, 'time_created', a.time_created) FROM user_account a WHERE a.id = p.author_id) as author
           FROM products p ${statusString} ${
             statusQuery ? "AND" : "WHERE"
           } LOWER(p.title) LIKE '%' || LOWER($1) || '%' ORDER BY p.id DESC`,
@@ -51,7 +51,7 @@ class ProductService {
       } else {
         return db.query(`SELECT p.id, p.title, p.client_id, p.description, p.amount, p.location, p.images, p.status, p.time_created, p.time_to_take, 
         (SELECT json_build_object('id', c.id, 'name', c.name) FROM category c WHERE c.id = p.category_id) as category,
-        (SELECT json_build_object('id', a.id, 'name', a.name, 'surname', a.surname, 'company_name', a.company_name, 'email', a.email, 'phone', a.phone) FROM user_account a WHERE a.id = p.author_id) as author
+        (SELECT json_build_object('id', a.id, 'name', a.name, 'surname', a.surname, 'company_name', a.company_name, 'email', a.email, 'phone', a.phone, 'time_created', a.time_created) FROM user_account a WHERE a.id = p.author_id) as author
         FROM products p ${statusString} ORDER BY p.id DESC`);
       }
     } else if (Number(pageQuery)) {
@@ -59,7 +59,7 @@ class ProductService {
         return db.query(
           `SELECT p.id, p.title, p.client_id, p.description, p.amount, p.location, p.images, p.status, p.time_created, p.time_to_take, 
           (SELECT json_build_object('id', c.id, 'name', c.name) FROM category c WHERE c.id = p.category_id) as category,
-          (SELECT json_build_object('id', a.id, 'name', a.name, 'surname', a.surname, 'company_name', a.company_name, 'email', a.email, 'phone', a.phone) FROM user_account a WHERE a.id = p.author_id) as author
+          (SELECT json_build_object('id', a.id, 'name', a.name, 'surname', a.surname, 'company_name', a.company_name, 'email', a.email, 'phone', a.phone, 'time_created', a.time_created) FROM user_account a WHERE a.id = p.author_id) as author
           FROM products p ${statusString} ${
             statusQuery ? "AND" : "WHERE"
           } LOWER(p.title) LIKE '%' || LOWER($1) || '%' ORDER BY p.id DESC LIMIT ${PRODUCTS_ON_PAGE} OFFSET ${
@@ -71,7 +71,7 @@ class ProductService {
         return db.query(
           `SELECT p.id, p.title, p.description, p.client_id, p.amount, p.location, p.images, p.status, p.time_created, p.time_to_take, 
           (SELECT json_build_object('id', c.id, 'name', c.name) FROM category c WHERE c.id = p.category_id) as category,
-          (SELECT json_build_object('id', a.id, 'name', a.name, 'surname', a.surname, 'company_name', a.company_name, 'email', a.email, 'phone', a.phone) FROM user_account a WHERE a.id = p.author_id) as author
+          (SELECT json_build_object('id', a.id, 'name', a.name, 'surname', a.surname, 'company_name', a.company_name, 'email', a.email, 'phone', a.phone, 'time_created', a.time_created) FROM user_account a WHERE a.id = p.author_id) as author
           FROM products p ${statusString} ORDER BY p.id DESC LIMIT ${PRODUCTS_ON_PAGE} OFFSET ${
             PRODUCTS_ON_PAGE * (pageQuery - 1)
           }`
@@ -96,7 +96,7 @@ class ProductService {
     return db.query(
       `SELECT p.id, p.title, p.client_id, p.description, p.amount, p.location, p.images, p.status, p.time_created, p.time_to_take, 
       (SELECT json_build_object('id', c.id, 'name', c.name) FROM category c WHERE c.id = p.category_id) as category,
-      (SELECT json_build_object('id', a.id, 'name', a.name, 'surname', a.surname, 'company_name', a.company_name, 'email', a.email, 'phone', a.phone) FROM user_account a WHERE a.id = p.author_id) as author
+      (SELECT json_build_object('id', a.id, 'name', a.name, 'surname', a.surname, 'company_name', a.company_name, 'email', a.email, 'phone', a.phone, 'time_created', a.time_created) FROM user_account a WHERE a.id = p.author_id) as author
       FROM products p WHERE p.id = $1`,
       [productId]
     );

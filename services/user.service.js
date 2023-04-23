@@ -3,12 +3,12 @@ const db = require("../db");
 class UserService {
   async getUsers() {
     return db.query(
-      `SELECT id, email, name, surname, phone, company_name FROM user_account ORDER BY id`
+      `SELECT id, email, name, surname, phone, company_name, time_created FROM user_account ORDER BY id`
     );
   }
   async getOneUser(userId) {
     return db.query(
-      `SELECT id, email, name, surname, phone, company_name FROM user_account WHERE id = $1`,
+      `SELECT id, email, name, surname, phone, company_name, time_created FROM user_account WHERE id = $1`,
       [userId]
     );
   }
