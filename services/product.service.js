@@ -35,21 +35,24 @@ class ProductService {
       ]
     );
   }
-  async getProducts(searchQuery, pageQuery) {
+  async getProducts(searchQuery, pageQuery, statusQuery) {
+    const statusString = statusQuery ? `WHERE status = '${statusQuery}'` : "";
     if (pageQuery === undefined) {
       if (searchQuery) {
         return db.query(
           `SELECT p.id, p.title, p.client_id, p.description, p.amount, p.location, p.images, p.status, p.time_created, p.time_to_take, 
           (SELECT json_build_object('id', c.id, 'name', c.name) FROM category c WHERE c.id = p.category_id) as category,
           (SELECT json_build_object('id', a.id, 'name', a.name, 'surname', a.surname, 'company_name', a.company_name, 'email', a.email, 'phone', a.phone) FROM user_account a WHERE a.id = p.author_id) as author
-          FROM products p WHERE LOWER(p.title) LIKE '%' || LOWER($1) || '%' ORDER BY p.id`,
+          FROM products p ${statusString} ${
+            statusQuery ? "AND" : "WHERE"
+          } LOWER(p.title) LIKE '%' || LOWER($1) || '%' ORDER BY p.id DESC`,
           [searchQuery]
         );
       } else {
         return db.query(`SELECT p.id, p.title, p.client_id, p.description, p.amount, p.location, p.images, p.status, p.time_created, p.time_to_take, 
         (SELECT json_build_object('id', c.id, 'name', c.name) FROM category c WHERE c.id = p.category_id) as category,
         (SELECT json_build_object('id', a.id, 'name', a.name, 'surname', a.surname, 'company_name', a.company_name, 'email', a.email, 'phone', a.phone) FROM user_account a WHERE a.id = p.author_id) as author
-        FROM products p ORDER BY p.id`);
+        FROM products p ${statusString} ORDER BY p.id DESC`);
       }
     } else if (Number(pageQuery)) {
       if (searchQuery) {
@@ -57,7 +60,9 @@ class ProductService {
           `SELECT p.id, p.title, p.client_id, p.description, p.amount, p.location, p.images, p.status, p.time_created, p.time_to_take, 
           (SELECT json_build_object('id', c.id, 'name', c.name) FROM category c WHERE c.id = p.category_id) as category,
           (SELECT json_build_object('id', a.id, 'name', a.name, 'surname', a.surname, 'company_name', a.company_name, 'email', a.email, 'phone', a.phone) FROM user_account a WHERE a.id = p.author_id) as author
-          FROM products p WHERE LOWER(p.title) LIKE '%' || LOWER($1) || '%' ORDER BY p.id LIMIT ${PRODUCTS_ON_PAGE} OFFSET ${
+          FROM products p ${statusString} ${
+            statusQuery ? "AND" : "WHERE"
+          } LOWER(p.title) LIKE '%' || LOWER($1) || '%' ORDER BY p.id DESC LIMIT ${PRODUCTS_ON_PAGE} OFFSET ${
             PRODUCTS_ON_PAGE * (pageQuery - 1)
           }`,
           [searchQuery]
@@ -67,21 +72,24 @@ class ProductService {
           `SELECT p.id, p.title, p.description, p.client_id, p.amount, p.location, p.images, p.status, p.time_created, p.time_to_take, 
           (SELECT json_build_object('id', c.id, 'name', c.name) FROM category c WHERE c.id = p.category_id) as category,
           (SELECT json_build_object('id', a.id, 'name', a.name, 'surname', a.surname, 'company_name', a.company_name, 'email', a.email, 'phone', a.phone) FROM user_account a WHERE a.id = p.author_id) as author
-          FROM products p ORDER BY p.id LIMIT ${PRODUCTS_ON_PAGE} OFFSET ${
+          FROM products p ${statusString} ORDER BY p.id DESC LIMIT ${PRODUCTS_ON_PAGE} OFFSET ${
             PRODUCTS_ON_PAGE * (pageQuery - 1)
           }`
         );
       }
     }
   }
-  async getTotalCount(searchQuery) {
+  async getTotalCount(searchQuery, statusQuery) {
+    const statusString = statusQuery ? `WHERE status = '${statusQuery}'` : "";
     if (searchQuery) {
       return db.query(
-        `SELECT COUNT(*) FROM products WHERE LOWER(title) LIKE '%' || LOWER($1) || '%'`,
+        `SELECT COUNT(*) FROM products ${statusString} ${
+          statusQuery ? "AND" : "WHERE"
+        } LOWER(title) LIKE '%' || LOWER($1) || '%'`,
         [searchQuery]
       );
     } else {
-      return db.query(`SELECT COUNT(*) FROM products`);
+      return db.query(`SELECT COUNT(*) FROM products ${statusString}`);
     }
   }
   async getOneProduct(productId) {
@@ -93,77 +101,35 @@ class ProductService {
       [productId]
     );
   }
-  async getCurrentProducts(authorId, pageQuery) {
-    if (pageQuery === undefined) {
-      return db.query(
-        `SELECT id, title, images, status
-      FROM products WHERE author_id = $1 AND (status = 'open' OR status = 'reserved') ORDER BY id DESC`,
-        [authorId]
-      );
-    } else if (Number(pageQuery)) {
-      return db.query(
-        `SELECT id, title, images, status
-      FROM products WHERE author_id = $1 AND (status = 'open' OR status = 'reserved') ORDER BY id DESC 
-      LIMIT ${PRODUCTS_ON_PROFILE} OFFSET ${
-          PRODUCTS_ON_PROFILE * (pageQuery - 1)
-        }`,
-        [authorId]
-      );
+  async getUserProducts(userId, pageQuery, statuses, userRole) {
+    if (statuses && userRole) {
+      if (pageQuery === undefined) {
+        return db.query(
+          `SELECT id, title, images, status
+          FROM products WHERE ${userRole} = ${userId} AND status in (${statuses}) ORDER BY id DESC`,
+          statuses
+        );
+      } else if (Number(pageQuery)) {
+        return db.query(
+          `SELECT id, title, images, status
+          FROM products WHERE ${userRole} = ${userId} AND status in (${statuses}) ORDER BY id DESC
+          LIMIT ${PRODUCTS_ON_PROFILE} OFFSET ${
+            PRODUCTS_ON_PROFILE * (pageQuery - 1)
+          }`
+        );
+      }
+    } else {
+      console.log("You didn't pass statuses or role.");
     }
   }
-  async getCurrentTotalCount(authorId) {
-    return db.query(
-      `SELECT COUNT(*) FROM products WHERE author_id = $1 AND (status = 'open' OR status = 'reserved')`,
-      [authorId]
-    );
-  }
-  async getClosedProducts(authorId, pageQuery) {
-    if (pageQuery === undefined) {
+  async getUserProductsTotalCount(authorId, statuses, userRole) {
+    if (statuses && userRole) {
       return db.query(
-        `SELECT id, title, images, status
-      FROM products WHERE author_id = $1 AND status = 'closed' ORDER BY id DESC`,
-        [authorId]
+        `SELECT COUNT(*) FROM products WHERE ${userRole} = ${authorId} AND status in (${statuses})`
       );
-    } else if (Number(pageQuery)) {
-      return db.query(
-        `SELECT id, title, images, status
-      FROM products WHERE author_id = $1 AND status = 'closed' ORDER BY id DESC
-      LIMIT ${PRODUCTS_ON_PROFILE} OFFSET ${
-          PRODUCTS_ON_PROFILE * (pageQuery - 1)
-        }`,
-        [authorId]
-      );
+    } else {
+      console.log("You didn't pass statuses or role.");
     }
-  }
-  async getClosedTotalCount(authorId) {
-    return db.query(
-      `SELECT COUNT(*) FROM products WHERE author_id = $1 AND status = 'closed'`,
-      [authorId]
-    );
-  }
-  async getTakenProducts(authorId, pageQuery) {
-    if (pageQuery === undefined) {
-      return db.query(
-        `SELECT id, title, images, status
-      FROM products WHERE client_id = $1 AND (status = 'reserved' OR status = 'closed') ORDER BY id DESC`,
-        [authorId]
-      );
-    } else if (Number(pageQuery)) {
-      return db.query(
-        `SELECT id, title, images, status
-      FROM products WHERE client_id = $1 AND (status = 'reserved' OR status = 'closed') ORDER BY id DESC
-      LIMIT ${PRODUCTS_ON_PROFILE} OFFSET ${
-          PRODUCTS_ON_PROFILE * (pageQuery - 1)
-        }`,
-        [authorId]
-      );
-    }
-  }
-  async getTakenTotalCount(authorId) {
-    return db.query(
-      `SELECT COUNT(*) FROM products WHERE client_id = $1 AND (status = 'reserved' OR status = 'closed')`,
-      [authorId]
-    );
   }
   async getCreatedProductsByUser(authorId) {
     return db.query(

@@ -7,12 +7,7 @@ router.post("/product", authMiddleware, productController.createProduct);
 router.get("/product", productController.getProducts);
 router.get("/product/:id", productController.getOneProduct);
 
-router.get(
-  "/product_current/:profile_id",
-  productController.getCurrentProducts
-);
-router.get("/product_closed/:profile_id", productController.getClosedProducts);
-router.get("/product_taken/:profile_id", productController.getTakenProducts);
+router.get("/product_user/:profile_id", productController.getUserProducts);
 router.get(
   "/product_created/:profile_id",
   productController.getCreatedProductsByUser

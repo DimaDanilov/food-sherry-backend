@@ -12,9 +12,13 @@ class ProductController {
   async getProducts(req, res) {
     const products = await productService.getProducts(
       req.query.search,
-      req.query.page
+      req.query.page,
+      req.query.status
     );
-    let total_count = await productService.getTotalCount(req.query.search);
+    let total_count = await productService.getTotalCount(
+      req.query.search,
+      req.query.status
+    );
     total_count = parseInt(total_count[0].count);
     res.json({ products, total_count });
   }
@@ -22,35 +26,35 @@ class ProductController {
     const products = await productService.getOneProduct(req.params.id);
     res.json(products[0]);
   }
-  async getCurrentProducts(req, res) {
-    const products = await productService.getCurrentProducts(
+  async getUserProducts(req, res) {
+    let statuses;
+    let userRole;
+    switch (req.query.filter) {
+      case "taken":
+        statuses = "'reserved','closed'";
+        userRole = "client_id";
+        break;
+      case "closed":
+        statuses = "'closed'";
+        userRole = "author_id";
+        break;
+      case "current":
+        statuses = "'open', 'reserved'";
+        userRole = "author_id";
+        break;
+      default:
+        break;
+    }
+    const products = await productService.getUserProducts(
       req.params.profile_id,
-      req.query.page
+      req.query.page,
+      statuses,
+      userRole
     );
-    let total_count = await productService.getCurrentTotalCount(
-      req.params.profile_id
-    );
-    total_count = parseInt(total_count[0].count);
-    res.json({ products, total_count });
-  }
-  async getClosedProducts(req, res) {
-    const products = await productService.getClosedProducts(
+    let total_count = await productService.getUserProductsTotalCount(
       req.params.profile_id,
-      req.query.page
-    );
-    let total_count = await productService.getClosedTotalCount(
-      req.params.profile_id
-    );
-    total_count = parseInt(total_count[0].count);
-    res.json({ products, total_count });
-  }
-  async getTakenProducts(req, res) {
-    const products = await productService.getTakenProducts(
-      req.params.profile_id,
-      req.query.page
-    );
-    let total_count = await productService.getTakenTotalCount(
-      req.params.profile_id
+      statuses,
+      userRole
     );
     total_count = parseInt(total_count[0].count);
     res.json({ products, total_count });
