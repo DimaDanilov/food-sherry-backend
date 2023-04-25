@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const fileUpload = require("express-fileupload");
 require("dotenv").config();
+const sequelize = require("./db");
 const productRouter = require("./routes/product.routes");
 const categoryRouter = require("./routes/category.routes");
 const authRouter = require("./routes/auth.routes");
@@ -19,8 +20,10 @@ app.use("/api", categoryRouter);
 app.use("/api", authRouter);
 app.use("/api", userRouter);
 
-const start = () => {
+const start = async () => {
   try {
+    await sequelize.authenticate();
+    await sequelize.sync();
     app.listen(BACKEND_PORT, () =>
       console.log(`SERVER STARTED ON PORT ${BACKEND_PORT}`)
     );

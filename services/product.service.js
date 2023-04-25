@@ -1,261 +1,255 @@
-const db = require("../db");
 const fileService = require("../services/file.service");
+const { Product, Category, UserAccount } = require("../models/models");
+const { Op } = require("sequelize");
 
 const PRODUCTS_ON_PAGE = 12;
 const PRODUCTS_ON_PROFILE = 6;
 
 class ProductService {
   async createProduct(product, pictures, userId) {
-    const fileName = fileService.saveFiles(pictures);
-    const {
-      title,
-      author,
-      category_id,
-      description,
-      amount,
-      time_created,
-      time_to_take,
-      location,
-      images,
-      status,
-    } = product;
-    return db.query(
-      `INSERT INTO products (title, author_id, category_id, description, amount, time_created, time_to_take, location, images, status) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
-      [
-        title,
-        userId,
-        category_id,
-        description,
-        amount,
-        time_created,
-        time_to_take,
-        location,
-        fileName,
-        status,
-      ]
-    );
+    const fileNames = fileService.saveFiles(pictures);
+    return await Product.create({
+      title: product.title,
+      author_id: userId,
+      category_id: product.category_id,
+      description: product.description,
+      amount: product.amount,
+      time_to_take: product.time_to_take,
+      location: product.location,
+      images: fileNames,
+      status: product.status,
+    });
   }
+
   async getProducts(searchQuery, pageQuery, statusQuery) {
-    const statusString = statusQuery ? `WHERE status = '${statusQuery}'` : "";
-    if (pageQuery === undefined) {
-      if (searchQuery) {
-        return db.query(
-          `SELECT p.id, p.title, p.client_id, p.description, p.amount, p.location, p.images, p.status, p.time_created, p.time_to_take, 
-          (SELECT json_build_object('id', c.id, 'name', c.name) FROM category c WHERE c.id = p.category_id) as category,
-          (SELECT json_build_object('id', a.id, 'name', a.name, 'surname', a.surname, 'company_name', a.company_name, 'email', a.email, 'phone', a.phone, 'time_created', a.time_created) FROM user_account a WHERE a.id = p.author_id) as author
-          FROM products p ${statusString} ${
-            statusQuery ? "AND" : "WHERE"
-          } LOWER(p.title) LIKE '%' || LOWER($1) || '%' ORDER BY p.id DESC`,
-          [searchQuery]
-        );
-      } else {
-        return db.query(`SELECT p.id, p.title, p.client_id, p.description, p.amount, p.location, p.images, p.status, p.time_created, p.time_to_take, 
-        (SELECT json_build_object('id', c.id, 'name', c.name) FROM category c WHERE c.id = p.category_id) as category,
-        (SELECT json_build_object('id', a.id, 'name', a.name, 'surname', a.surname, 'company_name', a.company_name, 'email', a.email, 'phone', a.phone, 'time_created', a.time_created) FROM user_account a WHERE a.id = p.author_id) as author
-        FROM products p ${statusString} ORDER BY p.id DESC`);
-      }
-    } else if (Number(pageQuery)) {
-      if (searchQuery) {
-        return db.query(
-          `SELECT p.id, p.title, p.client_id, p.description, p.amount, p.location, p.images, p.status, p.time_created, p.time_to_take, 
-          (SELECT json_build_object('id', c.id, 'name', c.name) FROM category c WHERE c.id = p.category_id) as category,
-          (SELECT json_build_object('id', a.id, 'name', a.name, 'surname', a.surname, 'company_name', a.company_name, 'email', a.email, 'phone', a.phone, 'time_created', a.time_created) FROM user_account a WHERE a.id = p.author_id) as author
-          FROM products p ${statusString} ${
-            statusQuery ? "AND" : "WHERE"
-          } LOWER(p.title) LIKE '%' || LOWER($1) || '%' ORDER BY p.id DESC LIMIT ${PRODUCTS_ON_PAGE} OFFSET ${
-            PRODUCTS_ON_PAGE * (pageQuery - 1)
-          }`,
-          [searchQuery]
-        );
-      } else {
-        return db.query(
-          `SELECT p.id, p.title, p.description, p.client_id, p.amount, p.location, p.images, p.status, p.time_created, p.time_to_take, 
-          (SELECT json_build_object('id', c.id, 'name', c.name) FROM category c WHERE c.id = p.category_id) as category,
-          (SELECT json_build_object('id', a.id, 'name', a.name, 'surname', a.surname, 'company_name', a.company_name, 'email', a.email, 'phone', a.phone, 'time_created', a.time_created) FROM user_account a WHERE a.id = p.author_id) as author
-          FROM products p ${statusString} ORDER BY p.id DESC LIMIT ${PRODUCTS_ON_PAGE} OFFSET ${
-            PRODUCTS_ON_PAGE * (pageQuery - 1)
-          }`
-        );
-      }
-    }
+    return await Product.findAndCountAll({
+      attributes: [
+        "id",
+        "title",
+        "client_id",
+        "description",
+        "amount",
+        "location",
+        "images",
+        "status",
+        "time_created",
+        "time_to_take",
+      ],
+      where: {
+        [Op.and]: [
+          statusQuery && { status: statusQuery },
+          searchQuery && {
+            title: { [Op.iLike]: `%${searchQuery}%` },
+          },
+        ],
+      },
+      limit: Number(pageQuery) ? PRODUCTS_ON_PAGE : undefined,
+      offset: Number(pageQuery)
+        ? PRODUCTS_ON_PAGE * (pageQuery - 1)
+        : undefined,
+      order: [["id", "DESC"]],
+      include: [
+        {
+          model: Category,
+          as: "category",
+          attributes: ["id", "name"],
+        },
+        {
+          model: UserAccount,
+          as: "author",
+          attributes: [
+            "id",
+            "name",
+            "surname",
+            "company_name",
+            "email",
+            "phone",
+            "time_created",
+          ],
+        },
+      ],
+    });
   }
-  async getTotalCount(searchQuery, statusQuery) {
-    const statusString = statusQuery ? `WHERE status = '${statusQuery}'` : "";
-    if (searchQuery) {
-      return db.query(
-        `SELECT COUNT(*) FROM products ${statusString} ${
-          statusQuery ? "AND" : "WHERE"
-        } LOWER(title) LIKE '%' || LOWER($1) || '%'`,
-        [searchQuery]
-      );
-    } else {
-      return db.query(`SELECT COUNT(*) FROM products ${statusString}`);
-    }
-  }
+
   async getOneProduct(productId) {
-    return db.query(
-      `SELECT p.id, p.title, p.client_id, p.description, p.amount, p.location, p.images, p.status, p.time_created, p.time_to_take, 
-      (SELECT json_build_object('id', c.id, 'name', c.name) FROM category c WHERE c.id = p.category_id) as category,
-      (SELECT json_build_object('id', a.id, 'name', a.name, 'surname', a.surname, 'company_name', a.company_name, 'email', a.email, 'phone', a.phone, 'time_created', a.time_created) FROM user_account a WHERE a.id = p.author_id) as author
-      FROM products p WHERE p.id = $1`,
-      [productId]
-    );
+    return Product.findOne({
+      where: {
+        id: productId,
+      },
+      attributes: [
+        "id",
+        "title",
+        "client_id",
+        "description",
+        "amount",
+        "location",
+        "images",
+        "status",
+        "time_created",
+        "time_to_take",
+      ],
+      include: [
+        {
+          model: Category,
+          as: "category",
+          attributes: ["id", "name"],
+        },
+        {
+          model: UserAccount,
+          as: "author",
+          attributes: [
+            "id",
+            "name",
+            "surname",
+            "company_name",
+            "email",
+            "phone",
+            "time_created",
+          ],
+        },
+      ],
+    });
   }
+
   async getUserProducts(userId, pageQuery, statuses, userRole) {
     if (statuses && userRole) {
-      if (pageQuery === undefined) {
-        return db.query(
-          `SELECT id, title, images, status
-          FROM products WHERE ${userRole} = ${userId} AND status in (${statuses}) ORDER BY id DESC`,
-          statuses
-        );
-      } else if (Number(pageQuery)) {
-        return db.query(
-          `SELECT id, title, images, status
-          FROM products WHERE ${userRole} = ${userId} AND status in (${statuses}) ORDER BY id DESC
-          LIMIT ${PRODUCTS_ON_PROFILE} OFFSET ${
-            PRODUCTS_ON_PROFILE * (pageQuery - 1)
-          }`
-        );
-      }
+      return await Product.findAndCountAll({
+        attributes: ["id", "title", "images", "status"],
+        where: {
+          [userRole]: userId,
+          status: statuses,
+        },
+        limit: Number(pageQuery) ? PRODUCTS_ON_PROFILE : undefined,
+        offset: Number(pageQuery)
+          ? PRODUCTS_ON_PROFILE * (pageQuery - 1)
+          : undefined,
+        order: [["id", "DESC"]],
+      });
     } else {
       console.log("You didn't pass statuses or role.");
     }
   }
-  async getUserProductsTotalCount(authorId, statuses, userRole) {
-    if (statuses && userRole) {
-      return db.query(
-        `SELECT COUNT(*) FROM products WHERE ${userRole} = ${authorId} AND status in (${statuses})`
-      );
-    } else {
-      console.log("You didn't pass statuses or role.");
-    }
+
+  async getProductsCountByUser(authorId) {
+    return await Product.count({
+      where: {
+        author_id: authorId,
+      },
+    });
   }
-  async getCreatedProductsByUser(authorId) {
-    return db.query(
-      `SELECT COUNT(*) FROM products WHERE author_id = ${authorId}`
-    );
-  }
+
   async updateProduct(product, pictures, userId) {
-    const {
-      title,
-      author,
-      category_id,
-      description,
-      amount,
-      time_created,
-      time_to_take,
-      location,
-      images,
-      status,
-      id,
-    } = product;
-    if (Number(author) !== userId) {
+    if (Number(product.author_id) !== userId) {
       console.log("ERROR AUTH");
     } else {
       // delete pictures before adding new
-      let picturesToDelete = await db.query(
-        `SELECT images FROM products where id = $1`,
-        [id]
-      );
-      fileService.deleteFiles(picturesToDelete[0].images);
+      let userPictureNamesToDelete = await Product.findOne({
+        attributes: ["images"],
+        where: { id: product.id },
+      });
+      fileService.deleteFiles(userPictureNamesToDelete.images);
 
       // add new pictures
-      const fileName = fileService.saveFiles(pictures);
-      return db.query(
-        `UPDATE products SET title = $1, author_id = $2, category_id = $3, description = $4, amount = $5, time_created = $6, time_to_take = $7, location = $8, images = $9, status = $10 WHERE id = $11 RETURNING *`,
-        [
-          title,
-          userId,
-          category_id,
-          description,
-          amount,
-          time_created,
-          time_to_take,
-          location,
-          fileName,
-          status,
-          id,
-        ]
+      const fileNames = fileService.saveFiles(pictures);
+      return await Product.update(
+        {
+          title: product.title,
+          author_id: userId,
+          category_id: product.category_id,
+          description: product.description,
+          amount: product.amount,
+          time_to_take: product.time_to_take,
+          location: product.location,
+          images: fileNames,
+        },
+        {
+          where: { id: product.id },
+        }
       );
     }
   }
-  async updateProductStatus(product, userId) {
-    const { id, status } = product;
-    let productToChange = await db.query(
-      `SELECT author_id, client_id, status FROM products where id = $1`,
-      [id]
-    );
 
-    switch (productToChange[0].status) {
-      case status:
-        console.log("You cant change status on the same status.");
-        break;
-      case "closed":
-        console.log("Status is closed. You can't change it anymore.");
-        break;
-      case "open":
-        if (status === "reserved") {
-          if (userId !== productToChange[0].author_id) {
-            return db.query(
-              `UPDATE products SET client_id = $1, status = $2 WHERE id = $3 RETURNING id, status, client_id`,
-              [userId, status, id]
+  async updateProductStatus(product, userId) {
+    const productToChange = await Product.findOne({
+      attributes: ["author_id", "client_id", "status"],
+      where: { id: product.id },
+    });
+
+    if (!productToChange) {
+      console.log("No product found");
+    } else {
+      switch (productToChange.status) {
+        case product.status:
+          console.log("You cant change status on the same status.");
+          break;
+        case "closed":
+          console.log("Status is closed. You can't change it anymore.");
+          break;
+        case "open":
+          if (product.status === "reserved") {
+            if (userId !== productToChange.author_id) {
+              return await Product.update(
+                {
+                  client_id: userId,
+                  status: product.status,
+                },
+                {
+                  where: { id: product.id },
+                }
+              );
+            } else {
+              console.log("You can't reserve product on yourself.");
+            }
+          } else if (product.status === "closed") {
+            console.log(
+              "You cant change status from open to closed. Reserve it first."
             );
-          } else {
-            console.log("You can't reserve product on yourself.");
           }
-        } else if (status === "closed") {
-          console.log(
-            "You cant change status from open to closed. Reserve it first."
-          );
-        }
-        break;
-      case "reserved":
-        if (status === "open") {
+          break;
+        case "reserved":
           if (
-            userId === productToChange[0].client_id ||
-            userId === productToChange[0].author_id
+            userId === productToChange.client_id ||
+            userId === productToChange.author_id
           ) {
-            return db.query(
-              `UPDATE products SET client_id = $1, status = $2 WHERE id = $3 RETURNING id, status, client_id`,
-              [null, status, id]
-            );
+            if (product.status === "open" || product.status === "closed") {
+              return await Product.update(
+                {
+                  client_id:
+                    product.status === "open"
+                      ? null
+                      : productToChange.client_id,
+                  status: product.status,
+                },
+                {
+                  where: { id: product.id },
+                }
+              );
+            }
           } else {
             console.log("Error. You are not an author or reserver.");
           }
-        } else if (status === "closed") {
-          if (
-            userId === productToChange[0].client_id ||
-            userId === productToChange[0].author_id
-          ) {
-            return db.query(
-              `UPDATE products SET client_id = $1, status = $2 WHERE id = $3 RETURNING id, status, client_id`,
-              [productToChange[0].client_id, status, id]
-            );
-          } else {
-            console.log("Error. You are not an author or reserver.");
-          }
-        }
-        break;
-      default:
-        console.log("Status to change unknown.");
-        break;
+          break;
+        default:
+          console.log("Status to change unknown.");
+          break;
+      }
     }
   }
+
   async deleteProduct(productId, userId) {
-    let productData = await db.query(
-      `SELECT images, author_id FROM products where id = $1`,
-      [productId]
-    );
-    if (Number(productData[0].author_id) !== userId) {
+    const product = await Product.findOne({
+      attributes: ["images", "author_id"],
+      where: { id: productId },
+    });
+
+    if (Number(product.author_id) !== userId) {
       console.log("ERROR AUTH");
     } else {
-      let pictures = await db.query(
-        `SELECT images FROM products where id = $1`,
-        [productId]
-      );
-      fileService.deleteFiles(pictures[0].images);
-      return db.query(`DELETE FROM products where id = $1`, [productId]);
+      fileService.deleteFiles(product.images);
+
+      return await Product.destroy({
+        where: { id: productId },
+      });
     }
   }
 }

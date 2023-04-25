@@ -1,8 +1,10 @@
-const db = require("../db");
+const { Category } = require("../models/models");
 
 class CategoryService {
   async getCategories() {
-    return db.query(`SELECT * FROM category`);
+    return await Category.findAll({
+      attributes: ["id", "name"],
+    });
   }
 }
 

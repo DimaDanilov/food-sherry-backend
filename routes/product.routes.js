@@ -10,7 +10,7 @@ router.get("/product/:id", productController.getOneProduct);
 router.get("/product_user/:profile_id", productController.getUserProducts);
 router.get(
   "/product_created/:profile_id",
-  productController.getCreatedProductsByUser
+  productController.getProductsCountByUser
 );
 
 router.put("/product", authMiddleware, productController.updateProduct);

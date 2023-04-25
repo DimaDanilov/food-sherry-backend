@@ -1,6 +1,6 @@
-const uuid = require("uuid");
-const path = require("path");
 const fs = require("fs");
+const path = require("path");
+const uuid = require("uuid");
 
 class FileService {
   _saveFile(file) {

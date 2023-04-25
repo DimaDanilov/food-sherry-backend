@@ -1,16 +1,32 @@
-const db = require("../db");
+const { UserAccount } = require("../models/models");
 
 class UserService {
   async getUsers() {
-    return db.query(
-      `SELECT id, email, name, surname, phone, company_name, time_created FROM user_account ORDER BY id`
-    );
+    return await UserAccount.findAll({
+      attributes: [
+        "id",
+        "email",
+        "name",
+        "surname",
+        "company_name",
+        "phone",
+        "time_created",
+      ],
+    });
   }
   async getOneUser(userId) {
-    return db.query(
-      `SELECT id, email, name, surname, phone, company_name, time_created FROM user_account WHERE id = $1`,
-      [userId]
-    );
+    return await UserAccount.findOne({
+      attributes: [
+        "id",
+        "email",
+        "name",
+        "surname",
+        "company_name",
+        "phone",
+        "time_created",
+      ],
+      where: { id: userId },
+    });
   }
 }
 

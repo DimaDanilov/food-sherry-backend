@@ -1,4 +1,4 @@
-const db = require("../db");
+const { UserAccount } = require("../models/models");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
@@ -38,63 +38,65 @@ class AuthService {
     if ((!company_name || !phone) && (!name || !surname || !phone)) {
       throw new Error("Введены не все данные");
     }
-    const candidate = await db.query(
-      `SELECT id, email FROM user_account WHERE email = $1`,
-      [email]
-    );
-    if (candidate.length) {
+    const candidate = await UserAccount.findOne({
+      attributes: ["id"],
+      where: { email },
+    });
+    if (candidate) {
       throw new Error("Пользователь с таким email уже существует");
     }
     const hashPassword = await bcrypt.hash(password, 5);
-    const user = await db.query(
-      `INSERT INTO user_account 
-      (email, password, name, surname, company_name, phone, time_created) 
-      values ($1, $2, $3, $4, $5, $6, $7) 
-      RETURNING id, email, name, surname, company_name, phone, time_created`,
-      [
-        email,
-        hashPassword,
-        name,
-        surname,
-        company_name,
-        phone,
-        new Date().toISOString(),
-      ]
-    );
-    const token = generateJwt(
-      user[0].id,
-      user[0].email,
-      user[0].name,
-      user[0].surname,
-      user[0].company_name,
-      user[0].phone,
-      user[0].time_created
-    );
 
-    return token;
+    const user = await UserAccount.create({
+      name: name,
+      surname: surname,
+      company_name: company_name,
+      phone: phone,
+      email: email,
+      password: hashPassword,
+    });
+
+    return generateJwt(
+      user.id,
+      user.email,
+      user.name,
+      user.surname,
+      user.company_name,
+      user.phone,
+      user.time_created
+    );
   }
 
   async login(loginData) {
     const { email, password } = loginData;
-    let user = await db.query(
-      `SELECT id, email, password, name, surname, company_name, phone, time_created FROM user_account WHERE email = $1`,
-      [email]
-    );
-    if (!user.length) {
+    const user = await UserAccount.findOne({
+      attributes: [
+        "id",
+        "email",
+        "password",
+        "name",
+        "surname",
+        "company_name",
+        "phone",
+        "time_created",
+      ],
+      where: { email },
+    });
+    if (!user) {
       throw new Error("Пользователя с таким email не существует");
     }
-    const comparePassword = bcrypt.compareSync(password, user[0].password);
+    const comparePassword = bcrypt.compareSync(password, user.password);
     if (!comparePassword) {
       throw new Error("Неверный пароль");
     }
     const token = generateJwt(
-      user[0].id,
-      user[0].email,
-      user[0].name,
-      user[0].surname,
-      user[0].company_name,
-      user[0].phone,
-      user[0].time_created
+      user.id,
+      user.email,
+      user.name,
+      user.surname,
+      user.company_name,
+      user.phone,
+      user.time_created
     );
 
     return token;
