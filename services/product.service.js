@@ -164,6 +164,8 @@ class ProductService {
         },
         {
           where: { id: product.id },
+          returning: true,
+          plain: true,
         }
       );
     }
@@ -195,6 +197,8 @@ class ProductService {
                 },
                 {
                   where: { id: product.id },
+                  returning: true,
+                  plain: true,
                 }
               );
             } else {
@@ -222,6 +226,8 @@ class ProductService {
                 },
                 {
                   where: { id: product.id },
+                  returning: true,
+                  plain: true,
                 }
               );
             }
