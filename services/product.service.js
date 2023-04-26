@@ -2,8 +2,8 @@ const fileService = require("../services/file.service");
 const { Product, Category, UserAccount } = require("../models/models");
 const { Op } = require("sequelize");
 
-const PRODUCTS_ON_PAGE = 12;
-const PRODUCTS_ON_PROFILE = 6;
+const PRODUCTS_ON_PRODUCTS_PAGE = 12;
+const PRODUCTS_ON_PROFILE = 8;
 
 class ProductService {
   async createProduct(product, pictures, userId) {
@@ -43,9 +43,9 @@ class ProductService {
           },
         ],
       },
-      limit: Number(pageQuery) ? PRODUCTS_ON_PAGE : undefined,
+      limit: Number(pageQuery) ? PRODUCTS_ON_PRODUCTS_PAGE : undefined,
       offset: Number(pageQuery)
-        ? PRODUCTS_ON_PAGE * (pageQuery - 1)
+        ? PRODUCTS_ON_PRODUCTS_PAGE * (pageQuery - 1)
         : undefined,
       order: [["id", "DESC"]],
       include: [
