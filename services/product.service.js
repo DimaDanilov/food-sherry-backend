@@ -21,7 +21,8 @@ class ProductService {
     });
   }
 
-  async getProducts(searchQuery, pageQuery, statusQuery) {
+  async getProducts(searchQuery, pageQuery, statusQuery, sortQuery) {
+    console.log(sortQuery);
     return await Product.findAndCountAll({
       attributes: [
         "id",
@@ -47,7 +48,10 @@ class ProductService {
       offset: Number(pageQuery)
         ? PRODUCTS_ON_PRODUCTS_PAGE * (pageQuery - 1)
         : undefined,
-      order: [["id", "DESC"]],
+      order:
+        sortQuery === "datedown"
+          ? [["time_to_take", "DESC"]]
+          : [["time_to_take"]],
       include: [
         {
           model: Category,

@@ -14,7 +14,8 @@ class ProductController {
     const productsAndCount = await productService.getProducts(
       req.query.search,
       req.query.page,
-      req.query.status
+      req.query.status,
+      req.query.sort
     );
     res.json(productsAndCount);
   }
