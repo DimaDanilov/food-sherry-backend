@@ -21,8 +21,13 @@ class ProductService {
     });
   }
 
-  async getProducts(searchQuery, pageQuery, statusQuery, sortQuery) {
-    console.log(sortQuery);
+  async getProducts(
+    searchQuery,
+    pageQuery,
+    statusQuery,
+    sortQuery,
+    categoriesQuery
+  ) {
     return await Product.findAndCountAll({
       attributes: [
         "id",
@@ -41,6 +46,11 @@ class ProductService {
           statusQuery && { status: statusQuery },
           searchQuery && {
             title: { [Op.iLike]: `%${searchQuery}%` },
+          },
+          categoriesQuery && {
+            category_id: {
+              [Op.in]: categoriesQuery,
+            },
           },
         ],
       },
@@ -127,7 +137,7 @@ class ProductService {
         offset: Number(pageQuery)
           ? PRODUCTS_ON_PROFILE * (pageQuery - 1)
           : undefined,
-        order: [["id", "DESC"]],
+        order: [["time_created", "DESC"]],
       });
     } else {
       console.log("You didn't pass statuses or role.");

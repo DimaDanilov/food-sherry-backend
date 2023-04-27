@@ -15,7 +15,8 @@ class ProductController {
       req.query.search,
       req.query.page,
       req.query.status,
-      req.query.sort
+      req.query.sort,
+      req.query.categories
     );
     res.json(productsAndCount);
   }
