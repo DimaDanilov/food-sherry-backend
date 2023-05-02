@@ -52,7 +52,6 @@ class ProductController {
   async updateProduct(req, res) {
     const updatedProduct = await productService.updateProduct(
       req.body,
-      req.files.images,
       req.user.id
     );
     res.json(updatedProduct);

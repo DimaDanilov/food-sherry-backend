@@ -152,19 +152,18 @@ class ProductService {
     });
   }
 
-  async updateProduct(product, pictures, userId) {
-    if (Number(product.author_id) !== userId) {
+  async updateProduct(product, userId) {
+    const existProduct = await Product.findOne({
+      attributes: ["id", "status", "author_id"],
+      where: { id: product.id },
+    });
+    if (!existProduct) {
+      console.log("THERE IS NO SUCH PRODUCT");
+    } else if (Number(existProduct.author_id) !== userId) {
       console.log("ERROR AUTH");
+    } else if (existProduct.status === "closed") {
+      console.log("STATUS IS CLOSED. YOU CANT CHANGE PRODUCT ANYMORE");
     } else {
-      // delete pictures before adding new
-      let userPictureNamesToDelete = await Product.findOne({
-        attributes: ["images"],
-        where: { id: product.id },
-      });
-      fileService.deleteFiles(userPictureNamesToDelete.images);
-
-      // add new pictures
-      const fileNames = fileService.saveFiles(pictures);
       return await Product.update(
         {
           title: product.title,
@@ -174,12 +173,9 @@ class ProductService {
           amount: product.amount,
           time_to_take: product.time_to_take,
           location: product.location,
-          images: fileNames,
         },
         {
           where: { id: product.id },
-          returning: true,
-          plain: true,
         }
       );
     }
