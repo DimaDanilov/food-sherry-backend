@@ -71,6 +71,9 @@ const UserAccount = sequelize.define(
       type: DataTypes.DATE,
       allowNull: false,
     },
+    avatar: {
+      type: DataTypes.STRING,
+    },
   },
   {
     freezeTableName: true,

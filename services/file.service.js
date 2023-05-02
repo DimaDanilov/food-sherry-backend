@@ -3,34 +3,37 @@ const path = require("path");
 const uuid = require("uuid");
 
 class FileService {
-  _saveFile(file) {
+  saveFile(file, folderName) {
     const fileName = uuid.v4() + ".jpg";
-    const filePath = path.resolve("static/food_images", fileName);
+    const filePath = path.resolve(`static/${folderName}`, fileName);
     file.mv(filePath);
     return fileName;
   }
-  saveFiles(files) {
+  saveFiles(files, folderName) {
     try {
       let filePaths = [];
       if (Array.isArray(files)) {
         files.forEach((file) => {
-          filePaths.push(this._saveFile(file));
+          filePaths.push(this.saveFile(file, folderName));
         });
       } else {
-        filePaths.push(this._saveFile(files));
+        filePaths.push(this.saveFile(files, folderName));
       }
       return filePaths;
     } catch (e) {
       console.log(e);
     }
   }
-  deleteFiles(files) {
+  deleteFile(file, folderName) {
+    const filePath = path.resolve(`static/${folderName}`, file);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+  }
+  deleteFiles(files, folderName) {
     try {
       files.forEach((file) => {
-        const filePath = path.resolve("static/food_images", file);
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-        }
+        deleteFile(file, folderName);
       });
     } catch (e) {
       console.log(`Error deleting files: ${e}`);

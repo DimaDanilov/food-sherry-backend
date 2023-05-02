@@ -7,7 +7,7 @@ const PRODUCTS_ON_PROFILE = 8;
 
 class ProductService {
   async createProduct(product, pictures, userId) {
-    const fileNames = fileService.saveFiles(pictures);
+    const fileNames = fileService.saveFiles(pictures, "food_images");
     return await Product.create({
       title: product.title,
       author_id: userId,
@@ -78,6 +78,7 @@ class ProductService {
             "company_name",
             "email",
             "phone",
+            "avatar",
             "time_created",
           ],
         },
@@ -118,6 +119,7 @@ class ProductService {
             "company_name",
             "email",
             "phone",
+            "avatar",
             "time_created",
           ],
         },
@@ -261,7 +263,7 @@ class ProductService {
     if (Number(product.author_id) !== userId) {
       console.log("ERROR AUTH");
     } else {
-      fileService.deleteFiles(product.images);
+      fileService.deleteFiles(product.images, "food_images");
 
       return await Product.destroy({
         where: { id: productId },
