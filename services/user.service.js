@@ -32,79 +32,69 @@ class UserService {
     });
   }
   async updateUser(userData, userId) {
-    if (Number(userData.id) !== userId) {
-      console.log("ERROR AUTH");
-    } else {
-      const user = await UserAccount.findOne({
-        attributes: ["id"],
-        where: { id: userId },
-      });
-      if (!user) {
-        console.log("THERE IS NO SUCH USER");
-      } else {
-        return await UserAccount.update(
-          {
-            name: userData.name,
-            surname: userData.surname,
-            company_name: userData.company_name,
-            phone: userData.phone,
-            email: userData.email,
-          },
-          {
-            where: { id: userId },
-          }
-        );
-      }
+    const user = await UserAccount.findOne({
+      attributes: ["id"],
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new Error("User with the specified ID was not found");
     }
+    return await UserAccount.update(
+      {
+        name: userData.name,
+        surname: userData.surname,
+        company_name: userData.company_name,
+        phone: userData.phone,
+        email: userData.email,
+      },
+      {
+        where: { id: userId },
+      }
+    );
   }
 
-  async updateUserAvatar(userData, avatar, userId) {
+  async updateUserAvatar(avatar, userId) {
     const user = await UserAccount.findOne({
       attributes: ["id", "avatar"],
       where: { id: userId },
     });
 
     if (!user) {
-      console.log("THERE IS NO SUCH USER");
-    } else if (Number(userData.id) !== userId) {
-      console.log("ERROR AUTH");
-    } else {
-      if (user.avatar) {
-        fileService.deleteFile(user.avatar, "profile_avatars");
-      }
-      const fileName = fileService.saveFile(avatar, "profile_avatars");
-      return await UserAccount.update(
-        {
-          avatar: fileName,
-        },
-        {
-          where: { id: userId },
-          returning: true,
-          plain: true,
-        }
-      );
+      throw new Error("User with the specified ID was not found");
     }
+    if (user.avatar) {
+      fileService.deleteFile(user.avatar, "profile_avatars");
+    }
+    const fileName = fileService.saveFile(avatar, "profile_avatars");
+    return await UserAccount.update(
+      {
+        avatar: fileName,
+      },
+      {
+        where: { id: userId },
+        returning: true,
+        plain: true,
+      }
+    );
   }
 
-  async deleteUserAvatar(requestUserId, authUserId) {
+  async deleteUserAvatar(userId) {
     const user = await UserAccount.findOne({
       attributes: ["id", "avatar"],
-      where: { id: authUserId },
+      where: { id: userId },
     });
 
     if (!user) {
-      console.log("THERE IS NO SUCH USER");
-    } else if (Number(requestUserId) !== authUserId) {
-      console.log("ERROR AUTH");
-    } else {
-      if (user.avatar) {
-        fileService.deleteFile(user.avatar, "profile_avatars");
-      }
-      return await UserAccount.update(
-        { avatar: null },
-        { where: { id: authUserId } }
-      );
+      throw new Error("User with the specified ID was not found");
     }
+    if (!user.avatar) {
+      throw new Error("There is no avatar for this user");
+    }
+    fileService.deleteFile(user.avatar, "profile_avatars");
+    return await UserAccount.update(
+      { avatar: null },
+      { where: { id: userId } }
+    );
   }
 }
 

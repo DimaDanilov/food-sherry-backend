@@ -33,17 +33,17 @@ class AuthService {
     const { email, password, name, surname, company_name, phone } =
       registerData;
     if (!email || !password) {
-      throw new Error("Некорректный email или password");
+      throw new Error("Email or password is empty");
     }
     if ((!company_name || !phone) && (!name || !surname || !phone)) {
-      throw new Error("Введены не все данные");
+      throw new Error("Some data is missing");
     }
     const candidate = await UserAccount.findOne({
       attributes: ["id"],
       where: { email },
     });
     if (candidate) {
-      throw new Error("Пользователь с таким email уже существует");
+      throw new Error("User with this email already exists");
     }
     const hashPassword = await bcrypt.hash(password, 5);
 
@@ -69,6 +69,9 @@ class AuthService {
 
   async login(loginData) {
     const { email, password } = loginData;
+    if (!email || !password) {
+      throw new Error("Email or password is empty");
+    }
     const user = await UserAccount.findOne({
       attributes: [
         "id",
@@ -83,11 +86,11 @@ class AuthService {
       where: { email },
     });
     if (!user) {
-      throw new Error("Пользователя с таким email не существует");
+      throw new Error("User with this email doesn't exist");
     }
     const comparePassword = bcrypt.compareSync(password, user.password);
     if (!comparePassword) {
-      throw new Error("Неверный пароль");
+      throw new Error("Incorrect password");
     }
     const token = generateJwt(
       user.id,

@@ -1,36 +1,77 @@
 const userService = require("../services/user.service");
+const GeneralError = require("../error/GeneralError");
 
 class UserController {
-  async getUsers(req, res) {
-    const users = await userService.getUsers();
-    res.json(users);
+  async getUsers(req, res, next) {
+    try {
+      const users = await userService.getUsers();
+      return res.json(users);
+    } catch (e) {
+      return next(GeneralError.badRequest(e.message));
+    }
   }
 
-  async getOneUser(req, res) {
-    const user = await userService.getOneUser(req.params.id);
-    res.json(user);
+  async getOneUser(req, res, next) {
+    try {
+      if (Number(req.params.id) <= 0) {
+        return next(GeneralError.badRequest("User id should be more than 0"));
+      }
+      const user = await userService.getOneUser(req.params.id);
+      return res.json(user);
+    } catch (e) {
+      return next(GeneralError.badRequest(e.message));
+    }
   }
 
-  async updateUser(req, res) {
-    const updatedUser = await userService.updateUser(req.body, req.user.id);
-    res.json(updatedUser);
+  async updateUser(req, res, next) {
+    try {
+      if (!Number(req.body.id > 0)) {
+        return next(GeneralError.badRequest("User id should be more than 0"));
+      }
+      if (Number(req.body.id) !== req.user.id) {
+        return next(GeneralError.forbidden("You are logged in as wrong user"));
+      }
+      const updatedUser = await userService.updateUser(req.body, req.user.id);
+      return res.json(updatedUser);
+    } catch (e) {
+      return next(GeneralError.badRequest(e.message));
+    }
   }
 
-  async updateUserAvatar(req, res) {
-    const updatedAvatar = await userService.updateUserAvatar(
-      req.body,
-      req.files.avatar,
-      req.user.id
-    );
-    res.json(updatedAvatar[1].avatar);
+  async updateUserAvatar(req, res, next) {
+    try {
+      if (!Number(req.body.id > 0)) {
+        return next(GeneralError.badRequest("User id should be more than 0"));
+      }
+      if (Number(req.body.id) !== req.user.id) {
+        return next(GeneralError.forbidden("You are logged in as wrong user"));
+      }
+      if (!req.files?.avatar) {
+        return next(GeneralError.badRequest("You didn't upload a picture"));
+      }
+      const updatedAvatar = await userService.updateUserAvatar(
+        req.files.avatar,
+        req.user.id
+      );
+      return res.json(updatedAvatar[1].avatar);
+    } catch (e) {
+      return next(GeneralError.badRequest(e.message));
+    }
   }
 
-  async deleteUserAvatar(req, res) {
-    const deletedAvatar = await userService.deleteUserAvatar(
-      req.params.id,
-      req.user.id
-    );
-    res.json(deletedAvatar);
+  async deleteUserAvatar(req, res, next) {
+    try {
+      if (Number(req.params.id) !== req.user.id) {
+        return next(GeneralError.forbidden("You are logged in as wrong user"));
+      }
+      if (Number(req.params.id) <= 0) {
+        return next(GeneralError.badRequest("User id should be more than 0"));
+      }
+      const deletedAvatar = await userService.deleteUserAvatar(req.user.id);
+      return res.json(deletedAvatar);
+    } catch (e) {
+      return next(GeneralError.badRequest(e.message));
+    }
   }
 }
 

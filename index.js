@@ -7,6 +7,7 @@ const productRouter = require("./routes/product.routes");
 const categoryRouter = require("./routes/category.routes");
 const authRouter = require("./routes/auth.routes");
 const userRouter = require("./routes/user.routes");
+const errorHandler = require("./middleware/error.middleware");
 
 const BACKEND_PORT = 5000;
 
@@ -20,6 +21,8 @@ app.use("/api", productRouter);
 app.use("/api", categoryRouter);
 app.use("/api", authRouter);
 app.use("/api", userRouter);
+
+app.use(errorHandler);
 
 const start = async () => {
   try {

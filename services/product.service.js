@@ -128,22 +128,18 @@ class ProductService {
   }
 
   async getUserProducts(userId, pageQuery, statuses, userRole) {
-    if (statuses && userRole) {
-      return await Product.findAndCountAll({
-        attributes: ["id", "title", "images", "status"],
-        where: {
-          [userRole]: userId,
-          status: statuses,
-        },
-        limit: Number(pageQuery) ? PRODUCTS_ON_PROFILE : undefined,
-        offset: Number(pageQuery)
-          ? PRODUCTS_ON_PROFILE * (pageQuery - 1)
-          : undefined,
-        order: [["time_created", "DESC"]],
-      });
-    } else {
-      console.log("You didn't pass statuses or role.");
-    }
+    return await Product.findAndCountAll({
+      attributes: ["id", "title", "images", "status"],
+      where: {
+        [userRole]: userId,
+        status: statuses,
+      },
+      limit: Number(pageQuery) ? PRODUCTS_ON_PROFILE : undefined,
+      offset: Number(pageQuery)
+        ? PRODUCTS_ON_PROFILE * (pageQuery - 1)
+        : undefined,
+      order: [["time_created", "DESC"]],
+    });
   }
 
   async getProductsCountByUser(authorId) {
@@ -160,27 +156,28 @@ class ProductService {
       where: { id: product.id },
     });
     if (!existProduct) {
-      console.log("THERE IS NO SUCH PRODUCT");
-    } else if (Number(existProduct.author_id) !== userId) {
-      console.log("ERROR AUTH");
-    } else if (existProduct.status === "closed") {
-      console.log("STATUS IS CLOSED. YOU CANT CHANGE PRODUCT ANYMORE");
-    } else {
-      return await Product.update(
-        {
-          title: product.title,
-          author_id: userId,
-          category_id: product.category_id,
-          description: product.description,
-          amount: product.amount,
-          time_to_take: product.time_to_take,
-          location: product.location,
-        },
-        {
-          where: { id: product.id },
-        }
-      );
+      throw new Error("There is no product with this id");
     }
+    if (Number(existProduct.author_id) !== userId) {
+      throw new Error("You are logged in as wrong user");
+    }
+    if (existProduct.status === "closed") {
+      throw new Error("Status is closed. You can't change product anymore");
+    }
+    return await Product.update(
+      {
+        title: product.title,
+        author_id: userId,
+        category_id: product.category_id,
+        description: product.description,
+        amount: product.amount,
+        time_to_take: product.time_to_take,
+        location: product.location,
+      },
+      {
+        where: { id: product.id },
+      }
+    );
   }
 
   async updateProductStatus(product, userId) {
@@ -190,67 +187,60 @@ class ProductService {
     });
 
     if (!productToChange) {
-      console.log("No product found");
-    } else {
-      switch (productToChange.status) {
-        case product.status:
-          console.log("You cant change status on the same status.");
-          break;
-        case "closed":
-          console.log("Status is closed. You can't change it anymore.");
-          break;
-        case "open":
-          if (product.status === "reserved") {
-            if (userId !== productToChange.author_id) {
-              return await Product.update(
-                {
-                  client_id: userId,
-                  status: product.status,
-                },
-                {
-                  where: { id: product.id },
-                  returning: true,
-                  plain: true,
-                }
-              );
-            } else {
-              console.log("You can't reserve product on yourself.");
-            }
-          } else if (product.status === "closed") {
-            console.log(
-              "You cant change status from open to closed. Reserve it first."
-            );
+      throw new Error("There is no product with this id");
+    }
+    switch (productToChange.status) {
+      case product.status:
+        throw new Error("You cant change status on the same status");
+      case "closed":
+        throw new Error("Status is closed. You can't change it anymore");
+      case "open":
+        if (product.status === "closed") {
+          throw new Error(
+            "You cant change status from open to closed. Reserve it first"
+          );
+        }
+        if (product.status === "reserved") {
+          if (userId === productToChange.author_id) {
+            throw new Error("You can't reserve product on yourself");
           }
-          break;
-        case "reserved":
-          if (
-            userId === productToChange.client_id ||
-            userId === productToChange.author_id
-          ) {
-            if (product.status === "open" || product.status === "closed") {
-              return await Product.update(
-                {
-                  client_id:
-                    product.status === "open"
-                      ? null
-                      : productToChange.client_id,
-                  status: product.status,
-                },
-                {
-                  where: { id: product.id },
-                  returning: true,
-                  plain: true,
-                }
-              );
+          return await Product.update(
+            {
+              client_id: userId,
+              status: product.status,
+            },
+            {
+              where: { id: product.id },
+              returning: true,
+              plain: true,
             }
-          } else {
-            console.log("Error. You are not an author or reserver.");
-          }
-          break;
-        default:
-          console.log("Status to change unknown.");
-          break;
-      }
+          );
+        }
+        throw new Error("Status to change to is unknown");
+      case "reserved":
+        if (
+          userId !== productToChange.client_id &&
+          userId !== productToChange.author_id
+        ) {
+          throw new Error("Error. You are not an author or reserver");
+        }
+        if (product.status === "open" || product.status === "closed") {
+          return await Product.update(
+            {
+              client_id:
+                product.status === "open" ? null : productToChange.client_id,
+              status: product.status,
+            },
+            {
+              where: { id: product.id },
+              returning: true,
+              plain: true,
+            }
+          );
+        }
+        throw new Error("Status to change to is unknown");
+      default:
+        throw new Error("Status to change from is unknown");
     }
   }
 
@@ -260,15 +250,17 @@ class ProductService {
       where: { id: productId },
     });
 
-    if (Number(product.author_id) !== userId) {
-      console.log("ERROR AUTH");
-    } else {
-      fileService.deleteFiles(product.images, "food_images");
-
-      return await Product.destroy({
-        where: { id: productId },
-      });
+    if (!product) {
+      throw new Error("There is no such product with this id to delete");
     }
+    if (Number(product.author_id) !== userId) {
+      throw new Error("You are logged in as wrong user");
+    }
+
+    fileService.deleteFiles(product.images, "food_images");
+    return await Product.destroy({
+      where: { id: productId },
+    });
   }
 }
 

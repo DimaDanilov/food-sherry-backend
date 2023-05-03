@@ -4,10 +4,14 @@ const uuid = require("uuid");
 
 class FileService {
   saveFile(file, folderName) {
-    const fileName = uuid.v4() + ".jpg";
-    const filePath = path.resolve(`static/${folderName}`, fileName);
-    file.mv(filePath);
-    return fileName;
+    try {
+      const fileName = uuid.v4() + ".jpg";
+      const filePath = path.resolve(`static/${folderName}`, fileName);
+      file.mv(filePath);
+      return fileName;
+    } catch (e) {
+      console.log(`Error saving file: ${e.message}`);
+    }
   }
   saveFiles(files, folderName) {
     try {
@@ -21,22 +25,26 @@ class FileService {
       }
       return filePaths;
     } catch (e) {
-      console.log(e);
+      console.log(`Error saving files: ${e.message}`);
     }
   }
   deleteFile(file, folderName) {
-    const filePath = path.resolve(`static/${folderName}`, file);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    try {
+      const filePath = path.resolve(`static/${folderName}`, file);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    } catch (e) {
+      console.log(`Error deleting file: ${e.message}`);
     }
   }
   deleteFiles(files, folderName) {
     try {
       files.forEach((file) => {
-        deleteFile(file, folderName);
+        this.deleteFile(file, folderName);
       });
     } catch (e) {
-      console.log(`Error deleting files: ${e}`);
+      console.log(`Error deleting files: ${e.message}`);
     }
   }
 }
