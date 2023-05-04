@@ -3,10 +3,7 @@ const cors = require("cors");
 const fileUpload = require("express-fileupload");
 require("dotenv").config();
 const sequelize = require("./db");
-const productRouter = require("./routes/product.routes");
-const categoryRouter = require("./routes/category.routes");
-const authRouter = require("./routes/auth.routes");
-const userRouter = require("./routes/user.routes");
+const router = require("./routes/index");
 const errorHandler = require("./middleware/error.middleware");
 
 const BACKEND_PORT = 5000;
@@ -17,10 +14,7 @@ app.use("/food_images", express.static("static/food_images"));
 app.use("/profile_avatars", express.static("static/profile_avatars"));
 app.use(fileUpload({}));
 app.use(cors());
-app.use("/api", productRouter);
-app.use("/api", categoryRouter);
-app.use("/api", authRouter);
-app.use("/api", userRouter);
+app.use("/api", router);
 
 app.use(errorHandler);
 
