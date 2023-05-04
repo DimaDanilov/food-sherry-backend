@@ -29,18 +29,7 @@ class ProductService {
     categoriesQuery
   ) {
     return await Product.findAndCountAll({
-      attributes: [
-        "id",
-        "title",
-        "client_id",
-        "description",
-        "amount",
-        "location",
-        "images",
-        "status",
-        "time_created",
-        "time_to_take",
-      ],
+      attributes: ["id", "title", "location", "images", "time_to_take"],
       where: {
         [Op.and]: [
           statusQuery && { status: statusQuery },
@@ -63,11 +52,6 @@ class ProductService {
           ? [["time_to_take", "DESC"]]
           : [["time_to_take"]],
       include: [
-        {
-          model: Category,
-          as: "category",
-          attributes: ["id", "name"],
-        },
         {
           model: UserAccount,
           as: "author",
