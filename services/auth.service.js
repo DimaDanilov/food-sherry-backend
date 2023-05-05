@@ -105,14 +105,29 @@ class AuthService {
     return token;
   }
   async check(userData) {
+    const user = await UserAccount.findOne({
+      attributes: [
+        "id",
+        "email",
+        "name",
+        "surname",
+        "company_name",
+        "phone",
+        "time_created",
+      ],
+      where: { email: userData.email },
+    });
+    if (!user) {
+      throw new Error("User doesn't exist");
+    }
     return generateJwt(
-      userData.id,
-      userData.email,
-      userData.name,
-      userData.surname,
-      userData.company_name,
-      userData.phone,
-      userData.time_created
+      user.id,
+      user.email,
+      user.name,
+      user.surname,
+      user.company_name,
+      user.phone,
+      user.time_created
     );
   }
 }
