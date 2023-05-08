@@ -1,19 +1,54 @@
 const fileService = require("../services/file.service");
 const { UserAccount } = require("../models/models");
+const { Op } = require("sequelize");
+var Sequelize = require("sequelize");
+
+const USERS_ON_SEARCH_PAGE = 8;
 
 class UserService {
-  async getUsers() {
-    return await UserAccount.findAll({
-      attributes: [
-        "id",
-        "email",
-        "name",
-        "surname",
-        "company_name",
-        "phone",
-        "avatar",
-        "time_created",
-      ],
+  async getUsers(searchQuery, pageQuery) {
+    return await UserAccount.findAndCountAll({
+      attributes: ["id", "name", "surname", "company_name", "avatar"],
+      where: {
+        [Op.and]: [
+          searchQuery && {
+            [Op.or]: [
+              { company_name: { [Op.iLike]: `%${searchQuery}%` } },
+              {
+                [Op.and]: [
+                  Sequelize.where(
+                    Sequelize.fn(
+                      "concat",
+                      Sequelize.col("name"),
+                      " ",
+                      Sequelize.col("surname")
+                    ),
+                    { [Op.iLike]: `%${searchQuery}%` }
+                  ),
+                ],
+              },
+              {
+                [Op.and]: [
+                  Sequelize.where(
+                    Sequelize.fn(
+                      "concat",
+                      Sequelize.col("surname"),
+                      " ",
+                      Sequelize.col("name")
+                    ),
+                    { [Op.iLike]: `%${searchQuery}%` }
+                  ),
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      limit: Number(pageQuery) ? USERS_ON_SEARCH_PAGE : undefined,
+      offset: Number(pageQuery)
+        ? USERS_ON_SEARCH_PAGE * (pageQuery - 1)
+        : undefined,
+      order: [["time_created", "DESC"]],
     });
   }
   async getOneUser(userId) {

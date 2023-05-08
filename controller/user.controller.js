@@ -4,7 +4,13 @@ const GeneralError = require("../error/GeneralError");
 class UserController {
   async getUsers(req, res, next) {
     try {
-      const users = await userService.getUsers();
+      if (req.query.page && !(Number(req.query.page) > 0)) {
+        return next(GeneralError.badRequest("Page should be more than 0"));
+      }
+      const users = await userService.getUsers(
+        req.query.search,
+        req.query.page
+      );
       return res.json(users);
     } catch (e) {
       return next(GeneralError.badRequest(e.message));
