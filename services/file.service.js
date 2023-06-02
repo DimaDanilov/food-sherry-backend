@@ -6,7 +6,10 @@ class FileService {
   saveFile(file, folderName) {
     try {
       const fileName = uuid.v4() + ".jpg";
-      const filePath = path.resolve(`static/${folderName}`, fileName);
+      const filePath = path.resolve(
+        `.vercel/output/static/${folderName}`,
+        fileName
+      );
       file.mv(filePath);
       return fileName;
     } catch (e) {
@@ -30,7 +33,10 @@ class FileService {
   }
   deleteFile(file, folderName) {
     try {
-      const filePath = path.resolve(`static/${folderName}`, file);
+      const filePath = path.resolve(
+        `.vercel/output/static/${folderName}`,
+        file
+      );
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
