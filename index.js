@@ -6,8 +6,6 @@ const sequelize = require("./db");
 const router = require("./routes/index");
 const errorHandler = require("./middleware/error.middleware");
 
-const BACKEND_PORT = 5000;
-
 const app = express();
 app.use(express.json()); // for parsing application/json
 app.use("/food_images", express.static("static/food_images"));
@@ -22,8 +20,8 @@ const start = async () => {
   try {
     await sequelize.authenticate();
     await sequelize.sync();
-    app.listen(BACKEND_PORT, () =>
-      console.log(`SERVER STARTED ON PORT ${BACKEND_PORT}`)
+    app.listen(process.env.BACKEND_PORT, () =>
+      console.log(`SERVER STARTED ON PORT ${process.env.BACKEND_PORT}`)
     );
   } catch (e) {
     console.log(e);
