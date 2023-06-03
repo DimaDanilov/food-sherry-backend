@@ -8,8 +8,11 @@ const errorHandler = require("./middleware/error.middleware");
 
 const app = express();
 app.use(express.json()); // for parsing application/json
-app.use("/food_images", express.static("static/food_images"));
-app.use("/profile_avatars", express.static("static/profile_avatars"));
+app.use("/food_images", express.static(".vercel/output/static/food_images"));
+app.use(
+  "/profile_avatars",
+  express.static(".vercel/static/output/profile_avatars")
+);
 app.use(fileUpload({}));
 app.use(cors());
 app.use("/api", router);
