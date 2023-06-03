@@ -10,11 +10,11 @@ const backend_port = process.env.BACKEND_PORT || 8000;
 
 const app = express();
 app.use(express.json()); // for parsing application/json
-app.use("/food_images", path.join(__dirname, "public/static/food_images"));
+app.use(express.static(path.resolve(__dirname, "public/static/food_images")));
 app.use(
-  "/profile_avatars",
-  path.join(__dirname, "public/static/profile_avatars")
+  express.static(path.resolve(__dirname, "public/static/profile_avatars"))
 );
+
 app.use(fileUpload({}));
 app.use(
   cors({
