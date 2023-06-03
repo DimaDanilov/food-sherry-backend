@@ -7,7 +7,10 @@ class FileService {
     try {
       const fileName = uuid.v4() + ".jpg";
       const filePath = path.resolve(
-        `.vercel/output/static/${folderName}`,
+        __dirname,
+        "..",
+        "public/static",
+        folderName,
         fileName
       );
       file.mv(filePath);
@@ -34,7 +37,10 @@ class FileService {
   deleteFile(file, folderName) {
     try {
       const filePath = path.resolve(
-        `.vercel/output/static/${folderName}`,
+        __dirname,
+        "..",
+        "public/static",
+        folderName,
         file
       );
       if (fs.existsSync(filePath)) {
