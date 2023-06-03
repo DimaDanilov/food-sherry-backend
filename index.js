@@ -14,8 +14,13 @@ app.use(
   express.static(".vercel/static/output/profile_avatars")
 );
 app.use(fileUpload({}));
-app.use(cors());
-app.use(cors({ origin: "https://food-sherry.vercel.app" }));
+app.use(
+  cors({
+    origin: "https://food-sherry.vercel.app",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 app.use("/api", router);
 
 app.use(errorHandler);
