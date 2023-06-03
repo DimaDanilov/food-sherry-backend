@@ -15,6 +15,7 @@ app.use(
 );
 app.use(fileUpload({}));
 app.use(cors());
+app.use(cors({ origin: "https://food-sherry.vercel.app" }));
 app.use("/api", router);
 
 app.use(errorHandler);
