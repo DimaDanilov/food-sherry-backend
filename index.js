@@ -5,6 +5,7 @@ require("dotenv").config();
 const sequelize = require("./db");
 const router = require("./routes/index");
 const errorHandler = require("./middleware/error.middleware");
+const path = require("path");
 
 const app = express();
 app.use(express.json()); // for parsing application/json
