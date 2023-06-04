@@ -52,11 +52,11 @@ class UserController {
       if (Number(req.body.id) !== req.user.id) {
         return next(GeneralError.forbidden("You are logged in as wrong user"));
       }
-      if (!req.files?.avatar) {
+      if (!req.body.avatar) {
         return next(GeneralError.badRequest("You didn't upload a picture"));
       }
       const updatedAvatar = await userService.updateUserAvatar(
-        req.files.avatar,
+        req.body.avatar,
         req.user.id
       );
       return res.json(updatedAvatar[1].avatar);

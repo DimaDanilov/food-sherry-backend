@@ -6,8 +6,13 @@ const PRODUCTS_ON_PRODUCTS_PAGE = 12;
 const PRODUCTS_ON_PROFILE = 8;
 
 class ProductService {
-  async createProduct(product, pictures, userId) {
-    const fileNames = fileService.saveFiles(pictures, "food_images");
+  async createProduct(product, userId) {
+    const fileNames = await fileService.saveFiles(
+      product.images,
+      "products",
+      "product",
+      null
+    );
     return await Product.create({
       title: product.title,
       author_id: userId,

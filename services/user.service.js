@@ -97,10 +97,12 @@ class UserService {
     if (!user) {
       throw new Error("User with the specified ID was not found");
     }
-    if (user.avatar) {
-      fileService.deleteFile(user.avatar, "profile_avatars");
-    }
-    const fileName = fileService.saveFile(avatar, "profile_avatars");
+    const fileName = await fileService.saveFile(
+      avatar,
+      "avatars",
+      "avatar",
+      userId
+    );
     return await UserAccount.update(
       {
         avatar: fileName,
@@ -125,7 +127,7 @@ class UserService {
     if (!user.avatar) {
       throw new Error("There is no avatar for this user");
     }
-    fileService.deleteFile(user.avatar, "profile_avatars");
+    fileService.deleteFile("avatars", "avatar", userId);
     return await UserAccount.update(
       { avatar: null },
       { where: { id: userId } }

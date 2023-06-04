@@ -1,60 +1,57 @@
-const fs = require("fs");
-const path = require("path");
-const uuid = require("uuid");
+const cloudinary = require("../cloudinary");
 
 class FileService {
-  saveFile(file, folderName) {
+  async saveFile(file, folder, folderPlaceholder, id) {
     try {
-      const fileName = uuid.v4() + ".jpg";
-      const filePath = path.resolve(
-        __dirname,
-        "..",
-        "public/static",
-        folderName,
-        fileName
-      );
-      file.mv(filePath);
-      return fileName;
+      const result = await cloudinary.uploader.upload(file, {
+        public_id: id ? `${folderPlaceholder}_${id}` : undefined,
+        folder: folder,
+        width: 200,
+        height: 200,
+        quality: 100,
+        crop: "scale",
+      });
+      return result.url;
     } catch (e) {
       console.log(`Error saving file: ${e.message}`);
     }
   }
-  saveFiles(files, folderName) {
+  async saveFiles(files, folder, folderPlaceholder, id) {
     try {
       let filePaths = [];
       if (Array.isArray(files)) {
-        files.forEach((file) => {
-          filePaths.push(this.saveFile(file, folderName));
-        });
+        for (const file of files) {
+          const filePath = await this.saveFile(
+            file,
+            folder,
+            folderPlaceholder,
+            id
+          );
+          filePaths.push(filePath);
+        }
       } else {
-        filePaths.push(this.saveFile(files, folderName));
+        filePaths.push(
+          await this.saveFile(files, folder, folderPlaceholder, id)
+        );
       }
       return filePaths;
     } catch (e) {
       console.log(`Error saving files: ${e.message}`);
     }
   }
-  deleteFile(file, folderName) {
+  async deleteFile(folder, folderPlaceholder, id) {
     try {
-      const filePath = path.resolve(
-        __dirname,
-        "..",
-        "public/static",
-        folderName,
-        file
-      );
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
+      console.log(`${folder}/${folderPlaceholder}_${id}`);
+      await cloudinary.uploader.destroy(`${folder}/${folderPlaceholder}_${id}`);
     } catch (e) {
       console.log(`Error deleting file: ${e.message}`);
     }
   }
-  deleteFiles(files, folderName) {
+  async deleteFiles(files, folder, folderPlaceholder, id) {
     try {
-      files.forEach((file) => {
-        this.deleteFile(file, folderName);
-      });
+      for (const file of files) {
+        await this.deleteFile(folder, folderPlaceholder, file);
+      }
     } catch (e) {
       console.log(`Error deleting files: ${e.message}`);
     }

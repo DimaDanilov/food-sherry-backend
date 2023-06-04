@@ -18,12 +18,11 @@ class ProductController {
       if (req.body.category_id && !(Number(req.body.category_id) > 0)) {
         return next(GeneralError.badRequest("Category should be more than 0"));
       }
-      if (!req.files?.images) {
+      if (!req.body.images) {
         return next(GeneralError.badRequest("You didn't upload pictures"));
       }
       const newProduct = await productService.createProduct(
         req.body,
-        req.files.images,
         req.user.id
       );
       res.json(newProduct);
