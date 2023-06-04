@@ -9,7 +9,7 @@ class FileService {
         width: 200,
         height: 200,
         quality: 100,
-        crop: "scale",
+        crop: "fit",
       });
       return result.url;
     } catch (e) {
