@@ -6,8 +6,8 @@ class FileService {
       const result = await cloudinary.uploader.upload(file, {
         public_id: id ? `${folderPlaceholder}_${id}` : undefined,
         folder: folder,
-        width: 200,
-        height: 200,
+        width: 250,
+        height: 250,
         quality: 100,
         crop: "fit",
       });
