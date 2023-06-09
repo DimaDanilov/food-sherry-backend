@@ -10,10 +10,6 @@ module.exports = new Sequelize(
     host: process.env.HOST,
     port: process.env.DB_PORT,
     ssl: true,
-    define: {
-      charset: "KOI-8R",
-      collate: "KOI-8R",
-    },
     dialectOptions: {
       ssl: {
         require: true,
