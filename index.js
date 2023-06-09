@@ -24,7 +24,7 @@ app.use(errorHandler);
 const start = async () => {
   try {
     await sequelize.authenticate();
-    await sequelize.sync();
+    await sequelize.sync({ alter: true });
     app.listen(backend_port, () =>
       console.log(`SERVER STARTED ON PORT ${backend_port}`)
     );
