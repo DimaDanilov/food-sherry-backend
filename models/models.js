@@ -6,7 +6,7 @@ const Product = sequelize.define(
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     title: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING + " CHARSET utf8 COLLATE utf8_general_ci",
       allowNull: false,
     },
     description: {
