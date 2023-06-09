@@ -35,8 +35,8 @@ const Product = sequelize.define(
     },
   },
   {
-    charset: "KOI8R",
-    collate: "KOI8R",
+    charset: "koi8r",
+    collate: "koi8r",
     freezeTableName: true,
     timestamps: true,
     createdAt: "time_created",
